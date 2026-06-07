@@ -1,7 +1,6 @@
 package com.strongest.enderdragon.event;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -36,7 +35,6 @@ import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
 import java.util.*;
-
 /**
  * エンダードラゴンの14種の攻撃パターンを管理するハンドラ。
  * 放射系攻撃は5秒間持続する弾幕スタイル。
@@ -105,6 +103,7 @@ public class DragonAttackHandler {
     private static final int GLOBAL_COOLDOWN = 60; // 攻撃間の最低間隔（3秒）
     private static final double CENTER_RANGE = 20.0; // ファング発動判定の中心からの距離
     private static final AABB SEARCH_AABB = new AABB(-300, -64, -300, 300, 320, 300);
+    private EnderDragon cachedDragon;
     private int lastAttackTick = -999;
     private final Random random = new Random();
 
@@ -135,6 +134,17 @@ public class DragonAttackHandler {
 
         tickCounter++;
 
+        if (cachedDragon == null || !cachedDragon.isAlive()) {
+            List<EnderDragon> dragons = serverLevel.getEntitiesOfClass(EnderDragon.class, SEARCH_AABB);
+            if (!dragons.isEmpty()) {
+                cachedDragon = dragons.get(0);
+            } else {
+                cachedDragon = null;
+            }
+        }
+
+        if (cachedDragon == null) return;
+
         // 持続中の弾幕攻撃を処理（毎tick）
         processActiveBarrages(serverLevel);
 
@@ -151,12 +161,8 @@ public class DragonAttackHandler {
         // 毎秒のみ新しい攻撃をチェック
         if (tickCounter % 20 != 0) return;
 
-        // ドラゴンを探す
-        List<EnderDragon> dragons = serverLevel.getEntitiesOfClass(EnderDragon.class,
-                new AABB(-300, -64, -300, 300, 320, 300));
-        if (dragons.isEmpty()) return;
-        EnderDragon dragon = dragons.get(0);
-        if (!dragon.isAlive()) return;
+        // ドラゴンを探す (キャッシュから取得)
+        EnderDragon dragon = cachedDragon;
 
         // 最寄りのプレイヤーを探す
         ServerPlayer target = findNearestPlayer(serverLevel, dragon);
@@ -659,11 +665,8 @@ public class DragonAttackHandler {
      * ドラゴンが中心付近にいるかチェックし、いればファングを回転生成する。
      */
     private void processPassiveFangs(ServerLevel level) {
-        List<EnderDragon> dragons = level.getEntitiesOfClass(EnderDragon.class,
-                new AABB(-300, -64, -300, 300, 320, 300));
-        if (dragons.isEmpty()) return;
-        EnderDragon dragon = dragons.get(0);
-        if (!dragon.isAlive()) return;
+        if (cachedDragon == null || !cachedDragon.isAlive()) return;
+        EnderDragon dragon = cachedDragon;
 
         // ドラゴンが中心(0, 0)付近にいるか判定
         double distFromCenter = Math.sqrt(dragon.getX() * dragon.getX() + dragon.getZ() * dragon.getZ());
@@ -682,15 +685,17 @@ public class DragonAttackHandler {
 
         double rotationOffset = (level.getGameTime() % 360) * Math.PI / 180.0;
 
+        // 中心座標の高さを一度だけ取得し、すべてのファングの高さとして使用する（計算コスト削減）
+        int centerFy = getSurfaceY(level, cx, cz);
+
         for (int line = 0; line < 8; line++) {
             double angle = rotationOffset + (line * Math.PI / 4.0);
             for (int i = 1; i <= 8; i++) {
                 double dist = i * 1.8;
                 double fx = cx + Math.cos(angle) * dist;
                 double fz = cz + Math.sin(angle) * dist;
-                int fy = getSurfaceY(level, fx, fz);
 
-                EvokerFangs fang = new EvokerFangs(level, fx, fy, fz,
+                EvokerFangs fang = new EvokerFangs(level, fx, centerFy, fz,
                         (float) angle, i * 2, dragon);
                 level.addFreshEntity(fang);
             }

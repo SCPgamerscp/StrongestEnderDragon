@@ -27,6 +27,9 @@ public class CrystalRespawnHandler {
     private static final int RESPAWN_DELAY_TICKS = 6000; // 5分 = 6000 ticks
     private static final float DRAGON_HEAL_AMOUNT = 50.0f;
 
+    private static final AABB SEARCH_AABB = new AABB(-300, -64, -300, 300, 320, 300);
+    private EnderDragon cachedDragon;
+
     // 追跡中のクリスタル (UUID -> 位置)
     private final Map<UUID, Vec3> trackedCrystals = new HashMap<>();
     // 復活予定のクリスタル
@@ -127,11 +130,18 @@ public class CrystalRespawnHandler {
      * ジ・エンドにいるドラゴンのHPを回復する。
      */
     private void healDragon(ServerLevel level) {
-        List<EnderDragon> dragons = level.getEntitiesOfClass(EnderDragon.class,
-                new AABB(-300, -64, -300, 300, 320, 300));
-        for (EnderDragon dragon : dragons) {
-            float newHealth = Math.min(dragon.getHealth() + DRAGON_HEAL_AMOUNT, dragon.getMaxHealth());
-            dragon.setHealth(newHealth);
+        if (cachedDragon == null || !cachedDragon.isAlive()) {
+            List<EnderDragon> dragons = level.getEntitiesOfClass(EnderDragon.class, SEARCH_AABB);
+            if (!dragons.isEmpty()) {
+                cachedDragon = dragons.get(0);
+            } else {
+                cachedDragon = null;
+            }
+        }
+
+        if (cachedDragon != null) {
+            float newHealth = Math.min(cachedDragon.getHealth() + DRAGON_HEAL_AMOUNT, cachedDragon.getMaxHealth());
+            cachedDragon.setHealth(newHealth);
             LOGGER.info("ドラゴンのHPを{}回復 (現在HP: {})", DRAGON_HEAL_AMOUNT, newHealth);
         }
     }
