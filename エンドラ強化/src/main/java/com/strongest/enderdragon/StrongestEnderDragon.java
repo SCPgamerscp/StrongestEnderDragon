@@ -5,7 +5,9 @@ import com.strongest.enderdragon.event.DragonEventHandler;
 import com.strongest.enderdragon.event.CrystalRespawnHandler;
 import com.strongest.enderdragon.event.DragonRewardHandler;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
 
@@ -15,13 +17,15 @@ public class StrongestEnderDragon {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public StrongestEnderDragon() {
-        LOGGER.info("Strongest Ender Dragon Mod を読み込み中...");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, DragonConfig.SPEC);
+
+        LOGGER.info("Strongest Ender Dragon Mod loading...");
 
         MinecraftForge.EVENT_BUS.register(new DragonEventHandler());
         MinecraftForge.EVENT_BUS.register(new DragonAttackHandler());
         MinecraftForge.EVENT_BUS.register(new CrystalRespawnHandler());
         MinecraftForge.EVENT_BUS.register(new DragonRewardHandler());
 
-        LOGGER.info("Strongest Ender Dragon Mod の読み込み完了！");
+        LOGGER.info("Strongest Ender Dragon Mod loaded.");
     }
 }
