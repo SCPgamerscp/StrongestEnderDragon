@@ -488,7 +488,7 @@ public class DragonAttackHandler {
 
     // ---------- 14. ドラゴン火の玉拡散ブレス（弾幕版・新攻撃） ----------
     /**
-     * 5秒間、3tickごとにDragonFireballを45度扇状に火炎放射のように連射。
+     * 5秒間、3tickごとにDragonFireballを45度円錐状に火炎放射のように連射。
      * 合計約33発のドラゴンファイアボール弾幕。
      */
     private void dragonBreathSprayBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
@@ -496,17 +496,23 @@ public class DragonAttackHandler {
 
         Vec3 dragonPos = new Vec3(dragon.getX(), dragon.getY() + 5, dragon.getZ());
         Vec3 toTarget = target.position().subtract(dragonPos).normalize();
-        double baseAngle = Math.atan2(toTarget.z, toTarget.x);
+        double baseYaw = Math.atan2(toTarget.z, toTarget.x);
+        double horizontalDist = Math.sqrt(toTarget.x * toTarget.x + toTarget.z * toTarget.z);
+        double basePitch = Math.atan2(toTarget.y, horizontalDist);
 
         for (int i = 0; i < 10; i++) {
-            double spread = (random.nextDouble() - 0.5) * (Math.PI / 4.0);
-            double angle = baseAngle + spread;
-            double ySpread = toTarget.y + (random.nextDouble() - 0.5) * 0.4;
+            // 45度の円錐（中心から半径22.5度 = PI / 8）にランダムで散らす
+            double r = random.nextDouble() * (Math.PI / 8.0);
+            double theta = random.nextDouble() * 2 * Math.PI;
 
-            double dx = Math.cos(angle);
-            double dz = Math.sin(angle);
+            double finalYaw = baseYaw + r * Math.cos(theta);
+            double finalPitch = basePitch + r * Math.sin(theta);
 
-            DragonFireball fireball = new DragonFireball(level, dragon, dx, ySpread, dz);
+            double dx = Math.cos(finalPitch) * Math.cos(finalYaw);
+            double dy = Math.sin(finalPitch);
+            double dz = Math.cos(finalPitch) * Math.sin(finalYaw);
+
+            DragonFireball fireball = new DragonFireball(level, dragon, dx, dy, dz);
             fireball.setPos(dragonPos.x, dragonPos.y, dragonPos.z);
             level.addFreshEntity(fireball);
         }
