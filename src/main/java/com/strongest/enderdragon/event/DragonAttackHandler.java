@@ -435,7 +435,7 @@ public class DragonAttackHandler {
 
     private void shulkerBulletBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
         if (tickCounter % 10 != 0) return;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 3; i++) {
             double angle = random.nextDouble() * 2 * Math.PI;
             double radius = 10 + random.nextDouble() * 5;
             double sx = target.getX() + Math.cos(angle) * radius;
