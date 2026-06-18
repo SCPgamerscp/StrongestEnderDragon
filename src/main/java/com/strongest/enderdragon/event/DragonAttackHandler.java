@@ -397,8 +397,8 @@ public class DragonAttackHandler {
         double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
         double spawnY = target.getY() + 30 + random.nextDouble() * 10;
         ItemStack fireworkStack = createRandomFireworkStack();
-        FireworkRocketEntity firework = new FireworkRocketEntity(level, fireworkStack, dragon);
-        firework.setPos(x, spawnY, z);
+        FireworkRocketEntity firework = new FireworkRocketEntity(level, x, spawnY, z, fireworkStack);
+        firework.setOwner(dragon);
         firework.setDeltaMovement((random.nextDouble() - 0.5) * 0.3, -2.0, (random.nextDouble() - 0.5) * 0.3);
         dragonFireworks.add(firework.getUUID());
         level.addFreshEntity(firework);
