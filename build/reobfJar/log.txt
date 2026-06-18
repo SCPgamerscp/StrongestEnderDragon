@@ -135,8 +135,8 @@ Reading Input: C:\Users\ecrea\Downloads\√G√”√h√…À?…?\build\libs\strongest_ender_
 Adding input to inheritance map
 Processing entries
 Conflicting propagated mapping for net/minecraft/world/entity/boss/enderdragon/EnderDragon/setId(I)V from net/minecraft/world/entity/Entity/setId(I)V: setId -> m_20234_
-Conflicting propagated mapping for net/minecraft/world/entity/projectile/FireworkRocketEntity/onHit(Lnet/minecraft/world/phys/HitResult;)V from net/minecraft/world/entity/projectile/Projectile/onHit(Lnet/minecraft/world/phys/HitResult;)V: onHit -> m_6532_
 Conflicting propagated mapping for net/minecraft/world/entity/LivingEntity/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V from net/minecraft/world/entity/player/Player/lambda$addAdditionalSaveData$3(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/Tag;)V: lambda$addAdditionalSaveData$3 -> m_219754_
+Conflicting propagated mapping for net/minecraft/world/entity/projectile/FireworkRocketEntity/onHit(Lnet/minecraft/world/phys/HitResult;)V from net/minecraft/world/entity/projectile/Projectile/onHit(Lnet/minecraft/world/phys/HitResult;)V: onHit -> m_6532_
 Adding extras
 Sorting
 Writing Output: C:\Users\ecrea\Downloads\√G√”√h√…À?…?\build\reobfJar\output.jar

@@ -131,18 +131,6 @@ public class DragonAttackHandler {
         tickCounter++;
         processActiveBarrages(serverLevel);
         
-        Iterator<UUID> fwIter = dragonFireworks.iterator();
-        while (fwIter.hasNext()) {
-            UUID uuid = fwIter.next();
-            net.minecraft.world.entity.Entity e = serverLevel.getEntity(uuid);
-            if (e instanceof net.minecraft.world.entity.projectile.FireworkRocketEntity fw) {
-                Vec3 v = fw.getDeltaMovement();
-                fw.setDeltaMovement(v.x / 1.15, -0.5, v.z / 1.15);
-            } else if (e == null) {
-                fwIter.remove();
-            }
-        }
-
         if (tickCounter % 10 == 0) clampProjectileVelocities(serverLevel);
         if (tickCounter % 10 == 0) processPassiveFangs(serverLevel);
         if (tickCounter % 20 != 0) return;
@@ -284,7 +272,7 @@ public class DragonAttackHandler {
         explosion.putBoolean("Trail", true);
         explosionsList.add(explosion);
         fireworksTag.put("Explosions", explosionsList);
-        fireworksTag.putByte("Flight", (byte) 10);
+        fireworksTag.putByte("Flight", (byte) 0);
         stack.getOrCreateTag().put("Fireworks", fireworksTag);
         return stack;
     }
@@ -429,16 +417,15 @@ public class DragonAttackHandler {
 
     private void fireworkRainBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
         if (tickCounter % 2 != 0) return;
-        double x = target.getX() + (random.nextDouble() - 0.5) * 20;
-        double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
-        double spawnY = target.getY() + 30 + random.nextDouble() * 10;
+        double x = target.getX() + (random.nextDouble() - 0.5) * 15;
+        double z = target.getZ() + (random.nextDouble() - 0.5) * 15;
+        double spawnY = target.getY() + random.nextDouble() * 10;
         ItemStack fireworkStack = createRandomFireworkStack();
         FireworkRocketEntity firework = new FireworkRocketEntity(level, x, spawnY, z, fireworkStack);
         firework.setOwner(dragon);
-        firework.setDeltaMovement((random.nextDouble() - 0.5) * 0.3, -1.0, (random.nextDouble() - 0.5) * 0.3);
+        firework.setDeltaMovement((random.nextDouble() - 0.5) * 0.1, 0.05, (random.nextDouble() - 0.5) * 0.1);
         dragonFireworks.add(firework.getUUID());
         level.addFreshEntity(firework);
-        level.sendParticles(ParticleTypes.FIREWORK, x, spawnY, z, 5, 1, 1, 1, 0.1);
     }
 
     private void shulkerBulletBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
