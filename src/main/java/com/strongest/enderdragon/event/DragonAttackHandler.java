@@ -421,15 +421,13 @@ public class DragonAttackHandler {
     }
 
     private void tntRainBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
-        for (int i = 0; i < 3; i++) {
-            double x = target.getX() + (random.nextDouble() - 0.5) * 20;
-            double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
-            double y = target.getY() + 30 + random.nextDouble() * 10;
-            PrimedTnt tnt = new PrimedTnt(level, x, y, z, dragon);
-            tnt.setFuse(80);
-            dragonTNTs.add(tnt.getUUID());
-            level.addFreshEntity(tnt);
-        }
+        double x = target.getX() + (random.nextDouble() - 0.5) * 20;
+        double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
+        double y = target.getY() + 30 + random.nextDouble() * 10;
+        PrimedTnt tnt = new PrimedTnt(level, x, y, z, dragon);
+        tnt.setFuse(80);
+        dragonTNTs.add(tnt.getUUID());
+        level.addFreshEntity(tnt);
         level.sendParticles(ParticleTypes.FLAME, target.getX(), target.getY() + 30, target.getZ(), 10, 5, 2, 5, 0.05);
     }
 
