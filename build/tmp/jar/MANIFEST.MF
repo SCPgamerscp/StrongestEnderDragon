@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Specification-Title: strongest_ender_dragon
+Specification-Vendor: Strongest
+Specification-Version: 1
+Implementation-Title: エンドラ強化
+Implementation-Version: 1.0.0
+Implementation-Vendor: Strongest
+Implementation-Timestamp: 2026-06-18T18:50:22+0900
+

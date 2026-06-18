@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="strongest_ender_dragon"
+version="${file.jarVersion}"
+displayName="Strongest Ender Dragon"
+authors="Strongest"
+description='''
+エンダードラゴンを大幅に強化するMod。
+HP1000、13種の攻撃パターン、エンドクリスタル自動復活、経験値100倍。
+'''
+
+[[dependencies.strongest_ender_dragon]]
+modId="forge"
+mandatory=true
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.strongest_ender_dragon]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.20.1,1.21)"
+ordering="NONE"
+side="BOTH"
