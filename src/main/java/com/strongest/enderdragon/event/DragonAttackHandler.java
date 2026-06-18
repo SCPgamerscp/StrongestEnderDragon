@@ -196,6 +196,14 @@ public class DragonAttackHandler {
             }
         } else if (event.getProjectile() instanceof FireworkRocketEntity fw) {
             if (dragonFireworks.contains(fw.getUUID())) {
+                if (event.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult ehr) {
+                    net.minecraft.world.entity.Entity hitEntity = ehr.getEntity();
+                    if (hitEntity instanceof EnderDragon || hitEntity.getClass().getSimpleName().contains("EnderDragonPart")) {
+                        event.setCanceled(true);
+                        return;
+                    }
+                }
+                
                 if (fw.level() instanceof ServerLevel serverLevel) {
                     serverLevel.broadcastEntityEvent(fw, (byte) 17);
                     List<ServerPlayer> nearby = serverLevel.getEntitiesOfClass(ServerPlayer.class, fw.getBoundingBox().inflate(5.0));
