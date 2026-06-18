@@ -194,6 +194,18 @@ public class DragonAttackHandler {
                     }
                 }
             }
+        } else if (event.getProjectile() instanceof FireworkRocketEntity fw) {
+            if (dragonFireworks.contains(fw.getUUID())) {
+                if (fw.level() instanceof ServerLevel serverLevel) {
+                    serverLevel.broadcastEntityEvent(fw, (byte) 17);
+                    List<ServerPlayer> nearby = serverLevel.getEntitiesOfClass(ServerPlayer.class, fw.getBoundingBox().inflate(5.0));
+                    for (ServerPlayer p : nearby) {
+                        p.hurt(serverLevel.damageSources().fireworks(fw, fw.getOwner()), 15.0f);
+                    }
+                    fw.discard();
+                    dragonFireworks.remove(fw.getUUID());
+                }
+            }
         }
     }
 
@@ -248,7 +260,7 @@ public class DragonAttackHandler {
         explosion.putBoolean("Trail", true);
         explosionsList.add(explosion);
         fireworksTag.put("Explosions", explosionsList);
-        fireworksTag.putByte("Flight", (byte) 1);
+        fireworksTag.putByte("Flight", (byte) 10);
         stack.getOrCreateTag().put("Fireworks", fireworksTag);
         return stack;
     }
@@ -399,7 +411,7 @@ public class DragonAttackHandler {
         ItemStack fireworkStack = createRandomFireworkStack();
         FireworkRocketEntity firework = new FireworkRocketEntity(level, x, spawnY, z, fireworkStack);
         firework.setOwner(dragon);
-        firework.setDeltaMovement((random.nextDouble() - 0.5) * 0.3, -2.0, (random.nextDouble() - 0.5) * 0.3);
+        firework.setDeltaMovement((random.nextDouble() - 0.5) * 0.3, -1.0, (random.nextDouble() - 0.5) * 0.3);
         dragonFireworks.add(firework.getUUID());
         level.addFreshEntity(firework);
         level.sendParticles(ParticleTypes.FIREWORK, x, spawnY, z, 5, 1, 1, 1, 0.1);
