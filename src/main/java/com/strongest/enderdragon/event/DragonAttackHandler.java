@@ -29,6 +29,7 @@ import net.minecraft.world.entity.projectile.ThrownTrident;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -129,6 +130,18 @@ public class DragonAttackHandler {
 
         tickCounter++;
         processActiveBarrages(serverLevel);
+        
+        Iterator<UUID> fwIter = dragonFireworks.iterator();
+        while (fwIter.hasNext()) {
+            UUID uuid = fwIter.next();
+            net.minecraft.world.entity.Entity e = serverLevel.getEntity(uuid);
+            if (e instanceof net.minecraft.world.entity.projectile.FireworkRocketEntity fw) {
+                Vec3 v = fw.getDeltaMovement();
+                fw.setDeltaMovement(v.x / 1.15, -0.5, v.z / 1.15);
+            } else if (e == null) {
+                fwIter.remove();
+            }
+        }
 
         if (tickCounter % 10 == 0) clampProjectileVelocities(serverLevel);
         if (tickCounter % 10 == 0) processPassiveFangs(serverLevel);
@@ -154,6 +167,9 @@ public class DragonAttackHandler {
         AttackType chosen = available.get(random.nextInt(available.size()));
         if (BARRAGE_ATTACKS.contains(chosen)) {
             activeBarrages.add(new BarrageState(chosen, tickCounter, dragon.getUUID(), target.getUUID()));
+            if (chosen == AttackType.FIREWORK_RAIN) {
+                serverLevel.getServer().getPlayerList().broadcastSystemMessage(Component.literal("§d[Dragon] Firework Rain begins!"), false);
+            }
         } else {
             executeInstantAttack(chosen, serverLevel, dragon, target);
         }
