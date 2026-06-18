@@ -81,13 +81,19 @@ public class DragonAttackHandler {
         final int endTick;
         final UUID dragonUUID;
         final UUID targetUUID;
+        final double initialX;
+        final double initialY;
+        final double initialZ;
 
-        BarrageState(AttackType type, int startTick, UUID dragonUUID, UUID targetUUID) {
+        BarrageState(AttackType type, int startTick, UUID dragonUUID, UUID targetUUID, double x, double y, double z) {
             this.type = type;
             this.startTick = startTick;
             this.endTick = startTick + 200;
             this.dragonUUID = dragonUUID;
             this.targetUUID = targetUUID;
+            this.initialX = x;
+            this.initialY = y;
+            this.initialZ = z;
         }
 
         boolean isFinished(int currentTick) { return currentTick >= endTick; }
@@ -154,7 +160,7 @@ public class DragonAttackHandler {
 
         AttackType chosen = available.get(random.nextInt(available.size()));
         if (BARRAGE_ATTACKS.contains(chosen)) {
-            activeBarrages.add(new BarrageState(chosen, tickCounter, dragon.getUUID(), target.getUUID()));
+            activeBarrages.add(new BarrageState(chosen, tickCounter, dragon.getUUID(), target.getUUID(), target.getX(), target.getY(), target.getZ()));
             if (chosen == AttackType.FIREWORK_RAIN) {
                 serverLevel.getServer().getPlayerList().broadcastSystemMessage(Component.literal("§d[Dragon] Firework Rain begins!"), false);
             }
@@ -181,7 +187,7 @@ public class DragonAttackHandler {
                 target = findNearestPlayer(level, dragon);
                 if (target == null) { iter.remove(); continue; }
             }
-            executeBarrageTick(barrage.type, level, dragon, target);
+            executeBarrageTick(barrage, level, dragon, target);
         }
     }
 
@@ -289,8 +295,8 @@ public class DragonAttackHandler {
         }
     }
 
-    private void executeBarrageTick(AttackType type, ServerLevel level, EnderDragon dragon, ServerPlayer target) {
-        switch (type) {
+    private void executeBarrageTick(BarrageState barrage, ServerLevel level, EnderDragon dragon, ServerPlayer target) {
+        switch (barrage.type) {
             case METEOR_STRIKE -> meteorBarrageTick(level, dragon, target);
             case BLAZE_FIREBALL -> blazeFireballBarrageTick(level, dragon, target);
             case SCATTER_ARROWS -> scatterArrowsBarrageTick(level, dragon, target);
@@ -298,7 +304,7 @@ public class DragonAttackHandler {
             case POTION_RAIN -> potionRainBarrageTick(level, dragon, target);
             case ACID_RAIN -> acidRainBarrageTick(level, dragon, target);
             case DRAGON_BREATH_SPRAY -> dragonBreathSprayBarrageTick(level, dragon, target);
-            case FIREWORK_RAIN -> fireworkRainBarrageTick(level, dragon, target);
+            case FIREWORK_RAIN -> fireworkRainBarrageTick(level, dragon, barrage);
             case SHULKER_BULLET -> shulkerBulletBarrageTick(level, dragon, target);
             case TNT_RAIN -> tntRainBarrageTick(level, dragon, target);
             default -> {}
@@ -415,15 +421,14 @@ public class DragonAttackHandler {
         level.sendParticles(ParticleTypes.DRAGON_BREATH, dragonPos.x, dragonPos.y, dragonPos.z, 20, 2, 2, 2, 0.15);
     }
 
-    private void fireworkRainBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
+    private void fireworkRainBarrageTick(ServerLevel level, EnderDragon dragon, BarrageState barrage) {
         if (tickCounter % 2 != 0) return;
-        double x = target.getX() + (random.nextDouble() - 0.5) * 20;
-        double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
-        double spawnY = target.getY() + random.nextDouble() * 2;
+        double x = barrage.initialX + (random.nextDouble() - 0.5) * 20;
+        double z = barrage.initialZ + (random.nextDouble() - 0.5) * 20;
+        double spawnY = barrage.initialY + 30 + random.nextDouble() * 10;
         ItemStack fireworkStack = createRandomFireworkStack();
-        FireworkRocketEntity firework = new FireworkRocketEntity(level, x, spawnY, z, fireworkStack);
-        firework.setOwner(dragon);
-        firework.setDeltaMovement(0, 0.05, 0);
+        FireworkRocketEntity firework = new FireworkRocketEntity(level, fireworkStack, dragon, x, spawnY, z, true);
+        firework.setDeltaMovement(0, -1.0, 0);
         dragonFireworks.add(firework.getUUID());
         level.addFreshEntity(firework);
     }
