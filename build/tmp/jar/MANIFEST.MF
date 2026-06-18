@@ -5,5 +5,5 @@ Specification-Version: 1
 Implementation-Title: エンドラ強化
 Implementation-Version: 1.0.0
 Implementation-Vendor: Strongest
-Implementation-Timestamp: 2026-06-18T20:32:12+0900
+Implementation-Timestamp: 2026-06-18T20:44:04+0900
 

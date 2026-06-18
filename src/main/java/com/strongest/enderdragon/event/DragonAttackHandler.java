@@ -417,13 +417,13 @@ public class DragonAttackHandler {
 
     private void fireworkRainBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
         if (tickCounter % 2 != 0) return;
-        double x = target.getX() + (random.nextDouble() - 0.5) * 15;
-        double z = target.getZ() + (random.nextDouble() - 0.5) * 15;
-        double spawnY = target.getY() + random.nextDouble() * 10;
+        double x = target.getX() + (random.nextDouble() - 0.5) * 20;
+        double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
+        double spawnY = target.getY() + random.nextDouble() * 2;
         ItemStack fireworkStack = createRandomFireworkStack();
         FireworkRocketEntity firework = new FireworkRocketEntity(level, x, spawnY, z, fireworkStack);
         firework.setOwner(dragon);
-        firework.setDeltaMovement((random.nextDouble() - 0.5) * 0.1, 0.05, (random.nextDouble() - 0.5) * 0.1);
+        firework.setDeltaMovement(0, 0.05, 0);
         dragonFireworks.add(firework.getUUID());
         level.addFreshEntity(firework);
     }
