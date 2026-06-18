@@ -304,7 +304,7 @@ public class DragonAttackHandler {
             case POTION_RAIN -> potionRainBarrageTick(level, dragon, target);
             case ACID_RAIN -> acidRainBarrageTick(level, dragon, target);
             case DRAGON_BREATH_SPRAY -> dragonBreathSprayBarrageTick(level, dragon, target);
-            case FIREWORK_RAIN -> fireworkRainBarrageTick(level, dragon, barrage);
+            case FIREWORK_RAIN -> fireworkRainBarrageTick(level, dragon, target);
             case SHULKER_BULLET -> shulkerBulletBarrageTick(level, dragon, target);
             case TNT_RAIN -> tntRainBarrageTick(level, dragon, target);
             default -> {}
@@ -421,11 +421,11 @@ public class DragonAttackHandler {
         level.sendParticles(ParticleTypes.DRAGON_BREATH, dragonPos.x, dragonPos.y, dragonPos.z, 20, 2, 2, 2, 0.15);
     }
 
-    private void fireworkRainBarrageTick(ServerLevel level, EnderDragon dragon, BarrageState barrage) {
+    private void fireworkRainBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
         if (tickCounter % 2 != 0) return;
-        double x = barrage.initialX + (random.nextDouble() - 0.5) * 20;
-        double z = barrage.initialZ + (random.nextDouble() - 0.5) * 20;
-        double spawnY = barrage.initialY + 30 + random.nextDouble() * 10;
+        double x = target.getX() + (random.nextDouble() - 0.5) * 20;
+        double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
+        double spawnY = target.getY() + 30 + random.nextDouble() * 10;
         ItemStack fireworkStack = createRandomFireworkStack();
         FireworkRocketEntity firework = new FireworkRocketEntity(level, fireworkStack, dragon, x, spawnY, z, true);
         firework.setDeltaMovement(0, -1.0, 0);
