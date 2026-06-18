@@ -278,7 +278,7 @@ public class DragonAttackHandler {
         explosion.putBoolean("Trail", true);
         explosionsList.add(explosion);
         fireworksTag.put("Explosions", explosionsList);
-        fireworksTag.putByte("Flight", (byte) 0);
+        fireworksTag.putByte("Flight", (byte) 5);
         stack.getOrCreateTag().put("Fireworks", fireworksTag);
         return stack;
     }
