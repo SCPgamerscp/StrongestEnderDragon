@@ -4,6 +4,7 @@ import com.strongest.enderdragon.event.DragonAttackHandler;
 import com.strongest.enderdragon.event.DragonEventHandler;
 import com.strongest.enderdragon.event.CrystalRespawnHandler;
 import com.strongest.enderdragon.event.DragonRewardHandler;
+import com.strongest.enderdragon.event.DragonEggHandler;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -25,6 +26,7 @@ public class StrongestEnderDragon {
         MinecraftForge.EVENT_BUS.register(new DragonAttackHandler());
         MinecraftForge.EVENT_BUS.register(new CrystalRespawnHandler());
         MinecraftForge.EVENT_BUS.register(new DragonRewardHandler());
+        MinecraftForge.EVENT_BUS.register(new DragonEggHandler());
 
         LOGGER.info("Strongest Ender Dragon Mod loaded.");
     }

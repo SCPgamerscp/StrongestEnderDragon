@@ -11,6 +11,9 @@ public class DragonConfig {
     public static final ForgeConfigSpec.IntValue     CRYSTAL_RESPAWN_DELAY_TICKS;
     public static final ForgeConfigSpec.DoubleValue  DRAGON_HEAL_AMOUNT;
 
+    public static final ForgeConfigSpec.BooleanValue DRAGON_EGG_HEAL_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue  DRAGON_EGG_HEAL_PER_EGG;
+
     static {
         BUILDER.comment("Strongest Ender Dragon - Crystal Respawn Settings");
         BUILDER.push("crystal_respawn");
@@ -26,6 +29,19 @@ public class DragonConfig {
         DRAGON_HEAL_AMOUNT = BUILDER
             .comment("HP restored to the Ender Dragon when a crystal respawns. Default: 50.0")
             .defineInRange("dragonHealAmount", 50.0, 0.0, 10000.0);
+
+        BUILDER.pop();
+
+        BUILDER.comment("Strongest Ender Dragon - Dragon Egg Passive Heal Settings");
+        BUILDER.push("dragon_egg");
+
+        DRAGON_EGG_HEAL_ENABLED = BUILDER
+            .comment("Enable or disable passive healing from carrying Dragon Eggs. Default: true")
+            .define("enabled", true);
+
+        DRAGON_EGG_HEAL_PER_EGG = BUILDER
+            .comment("HP healed per second per Dragon Egg held in inventory/equipment. Stacks linearly (e.g. 2 eggs = 2x). Default: 15.0")
+            .defineInRange("healPerEggPerSecond", 15.0, 0.0, 10000.0);
 
         BUILDER.pop();
         SPEC = BUILDER.build();
