@@ -1,8 +1,8 @@
 package com.strongest.enderdragon.event;
 
 import com.strongest.enderdragon.DragonConfig;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.entity.boss.enderdragon.EnderDragon;
@@ -11,6 +11,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.slf4j.Logger;
 import com.mojang.logging.LogUtils;
@@ -25,7 +26,7 @@ public class CrystalRespawnHandler {
 
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    // Tracked crystals (UUID -> position)
+    // Tracked crystals (UUID -> position) that are currently alive/loaded.
     private final Map<UUID, Vec3> trackedCrystals = new HashMap<>();
     // Scheduled respawns
     private final List<ScheduledRespawn> scheduledRespawns = new ArrayList<>();
@@ -42,6 +43,35 @@ public class CrystalRespawnHandler {
         }
     }
 
+    /**
+     * EntityLeaveLevelEvent fires whenever an entity leaves the level for ANY reason
+     * (killed, discarded/despawned, or simply unloaded to chunk), unlike the previous
+     * tick-based polling which only cleaned up trackedCrystals when the crystal's
+     * chunk happened to still be loaded. Relying solely on that poll meant a crystal
+     * destroyed in (or permanently unloaded from) a chunk that never reloads would
+     * leave its UUID in trackedCrystals forever, leaking memory. Handling the event
+     * directly guarantees the entry is always removed promptly and correctly.
+     */
+    @SubscribeEvent
+    public void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
+        if (event.getLevel().isClientSide()) return;
+        if (!(event.getEntity() instanceof EndCrystal crystal)) return;
+        if (event.getLevel().dimension() != Level.END) return;
+
+        Vec3 lastPos = trackedCrystals.remove(crystal.getUUID());
+        if (lastPos == null) return;
+
+        Entity.RemovalReason reason = crystal.getRemovalReason();
+        // Only schedule a respawn if the crystal was actually destroyed. Reasons such as
+        // UNLOADED_TO_CHUNK/UNLOADED_WITH_PLAYER/CHANGED_DIMENSION do not destroy the
+        // entity - it will simply rejoin the level later and be re-tracked automatically
+        // via onEntityJoinLevel, so no respawn should be scheduled for those cases.
+        if (reason == null || !reason.shouldDestroy()) return;
+        if (!DragonConfig.CRYSTAL_RESPAWN_ENABLED.get()) return;
+
+        scheduleRespawn(lastPos);
+    }
+
     @SubscribeEvent
     public void onLevelTick(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
@@ -49,41 +79,23 @@ public class CrystalRespawnHandler {
         if (serverLevel.dimension() != Level.END) return;
 
         tickCounter++;
-
-        if (tickCounter % 20 == 0) {
-            checkCrystals(serverLevel);
-        }
-
         processRespawns(serverLevel);
     }
 
-    private void checkCrystals(ServerLevel level) {
-        // Return early if crystal respawn is disabled in config
-        if (!DragonConfig.CRYSTAL_RESPAWN_ENABLED.get()) return;
-
-        Iterator<Map.Entry<UUID, Vec3>> iter = trackedCrystals.entrySet().iterator();
-        while (iter.hasNext()) {
-            Map.Entry<UUID, Vec3> entry = iter.next();
-            if (level.getEntity(entry.getKey()) == null) {
-                BlockPos pos = BlockPos.containing(entry.getValue());
-                if (level.isLoaded(pos)) {
-                    int latestRespawnTick = tickCounter;
-                    for (ScheduledRespawn existing : scheduledRespawns) {
-                        if (existing.respawnTick > latestRespawnTick) {
-                            latestRespawnTick = existing.respawnTick;
-                        }
-                    }
-                    int delay = DragonConfig.CRYSTAL_RESPAWN_DELAY_TICKS.get();
-                    int respawnAt = latestRespawnTick + delay;
-
-                    scheduledRespawns.add(new ScheduledRespawn(entry.getValue(), respawnAt));
-                    iter.remove();
-
-                    int minutesFromNow = (respawnAt - tickCounter) / 1200;
-                    LOGGER.info("End Crystal destroyed. Respawn in ~{} min at {}", minutesFromNow, entry.getValue());
-                }
+    private void scheduleRespawn(Vec3 pos) {
+        int latestRespawnTick = tickCounter;
+        for (ScheduledRespawn existing : scheduledRespawns) {
+            if (existing.respawnTick > latestRespawnTick) {
+                latestRespawnTick = existing.respawnTick;
             }
         }
+        int delay = DragonConfig.CRYSTAL_RESPAWN_DELAY_TICKS.get();
+        int respawnAt = latestRespawnTick + delay;
+
+        scheduledRespawns.add(new ScheduledRespawn(pos, respawnAt));
+
+        int minutesFromNow = (respawnAt - tickCounter) / 1200;
+        LOGGER.info("End Crystal destroyed. Respawn in ~{} min at {}", minutesFromNow, pos);
     }
 
     private void processRespawns(ServerLevel level) {

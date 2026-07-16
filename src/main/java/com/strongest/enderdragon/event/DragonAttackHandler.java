@@ -1,7 +1,6 @@
 package com.strongest.enderdragon.event;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -35,6 +34,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
@@ -233,6 +233,22 @@ public class DragonAttackHandler {
                 event.setAmount(15.0f);
             }
         }
+    }
+
+    /**
+     * Fired whenever an entity leaves the level for any reason (killed, discarded/despawned,
+     * unloaded to chunk, etc.). Used as a safety net to purge tracked UUIDs from
+     * dragonTridents/dragonFireworks/dragonTNTs even when the entity is removed without
+     * going through onProjectileImpact/onExplosionDetonate (e.g. chunk unload, /kill,
+     * despawn timers, or other mods removing the entity). Without this, the tracking
+     * sets would grow unbounded over a long-running server (memory leak).
+     */
+    @SubscribeEvent
+    public void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
+        UUID uuid = event.getEntity().getUUID();
+        dragonTridents.remove(uuid);
+        dragonFireworks.remove(uuid);
+        dragonTNTs.remove(uuid);
     }
 
     private ServerPlayer findNearestPlayer(ServerLevel level, EnderDragon dragon) {
