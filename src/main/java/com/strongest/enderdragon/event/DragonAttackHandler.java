@@ -99,9 +99,6 @@ public class DragonAttackHandler {
     }
 
     private final Map<AttackType, Integer> lastUsedTick = new EnumMap<>(AttackType.class);
-    private final Set<UUID> dragonTridents = new HashSet<>();
-    private final Set<UUID> dragonFireworks = new HashSet<>();
-    private final Set<UUID> dragonTNTs = new HashSet<>();
     private final List<BarrageState> activeBarrages = new ArrayList<>();
     private int tickCounter = 0;
     private static final int GLOBAL_COOLDOWN = 60;
@@ -193,7 +190,8 @@ public class DragonAttackHandler {
     @SubscribeEvent
     public void onProjectileImpact(ProjectileImpactEvent event) {
         if (event.getProjectile() instanceof ThrownTrident trident) {
-            if (dragonTridents.remove(trident.getUUID())) {
+            if (trident.getTags().contains("DragonTrident")) {
+                trident.removeTag("DragonTrident"); // 雷の多重発生を防止
                 if (trident.level() instanceof ServerLevel serverLevel) {
                     LightningBolt lightning = EntityType.LIGHTNING_BOLT.create(serverLevel);
                     if (lightning != null) {
@@ -204,7 +202,7 @@ public class DragonAttackHandler {
                 }
             }
         } else if (event.getProjectile() instanceof FireworkRocketEntity fw) {
-            if (dragonFireworks.contains(fw.getUUID())) {
+            if (fw.getTags().contains("DragonFirework")) {
                 if (event.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult ehr) {
                     net.minecraft.world.entity.Entity hitEntity = ehr.getEntity();
                     if (hitEntity instanceof EnderDragon || hitEntity.getClass().getSimpleName().contains("EnderDragonPart")) {
@@ -220,7 +218,6 @@ public class DragonAttackHandler {
                         p.hurt(serverLevel.damageSources().fireworks(fw, fw.getOwner()), 15.0f);
                     }
                     fw.discard();
-                    dragonFireworks.remove(fw.getUUID());
                 }
             }
         }
@@ -229,26 +226,10 @@ public class DragonAttackHandler {
     @SubscribeEvent
     public void onLivingHurt(LivingHurtEvent event) {
         if (event.getSource().getDirectEntity() instanceof FireworkRocketEntity fw) {
-            if (dragonFireworks.contains(fw.getUUID())) {
+            if (fw.getTags().contains("DragonFirework")) {
                 event.setAmount(15.0f);
             }
         }
-    }
-
-    /**
-     * Fired whenever an entity leaves the level for any reason (killed, discarded/despawned,
-     * unloaded to chunk, etc.). Used as a safety net to purge tracked UUIDs from
-     * dragonTridents/dragonFireworks/dragonTNTs even when the entity is removed without
-     * going through onProjectileImpact/onExplosionDetonate (e.g. chunk unload, /kill,
-     * despawn timers, or other mods removing the entity). Without this, the tracking
-     * sets would grow unbounded over a long-running server (memory leak).
-     */
-    @SubscribeEvent
-    public void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
-        UUID uuid = event.getEntity().getUUID();
-        dragonTridents.remove(uuid);
-        dragonFireworks.remove(uuid);
-        dragonTNTs.remove(uuid);
     }
 
     private ServerPlayer findNearestPlayer(ServerLevel level, EnderDragon dragon) {
@@ -370,15 +351,15 @@ public class DragonAttackHandler {
         if (tickCounter % 5 != 0) return;
         double x = target.getX() + (random.nextDouble() - 0.5) * 20;
         double z = target.getZ() + (random.nextDouble() - 0.5) * 20;
-        double y = target.getY() + 30 + random.nextDouble() * 10;
+        double spawnY = target.getY() + 30 + random.nextDouble() * 10;
         ThrownTrident trident = new ThrownTrident(EntityType.TRIDENT, level);
         trident.setOwner(dragon);
-        trident.setPos(x, y, z);
+        trident.setPos(x, spawnY, z);
         trident.shoot((random.nextDouble() - 0.5) * 0.1, -1.0, (random.nextDouble() - 0.5) * 0.1, 2.5f, 3.0f);
         trident.pickup = AbstractArrow.Pickup.DISALLOWED;
-        dragonTridents.add(trident.getUUID());
+        trident.addTag("DragonTrident");
         level.addFreshEntity(trident);
-        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, y, z, 5, 1, 1, 1, 0.2);
+        level.sendParticles(ParticleTypes.ELECTRIC_SPARK, x, spawnY, z, 5, 1, 1, 1, 0.2);
     }
 
     private void potionRainBarrageTick(ServerLevel level, EnderDragon dragon, ServerPlayer target) {
@@ -444,7 +425,7 @@ public class DragonAttackHandler {
         ItemStack fireworkStack = createRandomFireworkStack();
         FireworkRocketEntity firework = new FireworkRocketEntity(level, fireworkStack, dragon, x, spawnY, z, true);
         firework.setDeltaMovement(0, -1.0, 0);
-        dragonFireworks.add(firework.getUUID());
+        firework.addTag("DragonFirework");
         level.addFreshEntity(firework);
     }
 
@@ -469,7 +450,7 @@ public class DragonAttackHandler {
         double y = target.getY() + 30 + random.nextDouble() * 10;
         PrimedTnt tnt = new PrimedTnt(level, x, y, z, dragon);
         tnt.setFuse(80);
-        dragonTNTs.add(tnt.getUUID());
+        tnt.addTag("DragonTNT");
         level.addFreshEntity(tnt);
         level.sendParticles(ParticleTypes.FLAME, target.getX(), target.getY() + 30, target.getZ(), 10, 5, 2, 5, 0.05);
     }
@@ -479,7 +460,7 @@ public class DragonAttackHandler {
         if (!(event.getLevel() instanceof ServerLevel)) return;
         var explosion = event.getExplosion();
         if (explosion.getDirectSourceEntity() instanceof PrimedTnt tnt) {
-            if (dragonTNTs.remove(tnt.getUUID())) {
+            if (tnt.getTags().contains("DragonTNT")) {
                 event.getAffectedBlocks().clear();
             }
         }
